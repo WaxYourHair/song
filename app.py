@@ -1,87 +1,96 @@
 import streamlit as st
-import time
+import streamlit.components.v1 as components
+import json
 import os
 
 # Konfigurasi Halaman
-st.set_page_config(page_title="LANY - Soft Lyrics", page_icon="🎵")
-
-# Styling Custom CSS untuk tampilan estetik
-st.markdown("""
-    <style>
-    .lyric-text {
-        font-family: 'Serif';
-        font-size: 24px;
-        text-align: center;
-        font-weight: bold;
-        transition: all 0.5s ease-in-out;
-    }
-    .stAudio {
-        margin-top: 20px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+st.set_page_config(page_title="LANY - Soft Sync", page_icon="🎵")
 
 def main():
-    st.title("🎵 LANY - Soft")
+    st.markdown("<h1 style='text-align: center; color: #FFB6C1;'>🎵 LANY - Soft</h1>", unsafe_allow_html=True)
     
-    # Path Audio (Pastikan soft.mp3 ada di folder yang sama)
     AUDIO_FILE = "soft.mp3"
     
     if not os.path.exists(AUDIO_FILE):
-        st.error(f"File '{AUDIO_FILE}' tidak ditemukan. Pastikan file ada di direktori yang sama.")
+        st.error(f"File '{AUDIO_FILE}' tidak ditemukan di direktori.")
         return
 
-    # Tampilkan Audio Player
-    audio_file = open(AUDIO_FILE, 'rb')
-    audio_bytes = audio_file.read()
-    st.audio(audio_bytes, format='audio/mp3')
-
-    st.info("Klik tombol 'Start Lyrics' tepat saat lagu dimulai untuk sinkronisasi.")
-
-    # Data Lirik
-    lyrics = [
-        [0.0, "But I'm the only one that gets to", "#FFFFFF"],
-        [6.0, "Take you upstairs", "#FFB6C1"],
-        [8.50, "Closer to heaven", "#FFB6C1"],
-        [10.50, "Tell you how beautiful you are", "#FFB6C1"],
-        [15.50, "Lips like a prayer", "#00FFFF"],
-        [18.50, "Undone in your presence", "#00FFFF"],
-        [22.00, "Worship your body in the dark", "#FFFFFF"],
-        [25.50, "You're so soft", "#FFB6C1"],
-        [27.50, "Nothing about you ever hurts me", "#FFB6C1"],
-        [31.50, "You're so soft", "#FFB6C1"],
-        [33.00, "I'm a lover at your mercy", "#FFB6C1"],
-        [47.15, "You're so soft", "#FFB6C1"],
-        [49.15, "Nothing about you ever hurts me", "#FFB6C1"],
-        [52.00, "You're so soft", "#FFB6C1"],
-        [54.00, "I'm a lover at your mercy :)", "#FFB6C1"],
+    # Data Lirik (Detik, Teks, Warna)
+    lyrics_data = [
+        {"time": 0.0, "text": "But I'm the only one that gets to", "color": "#FFFFFF"},
+        {"time": 6.0, "text": "Take you upstairs", "color": "#FFB6C1"},
+        {"time": 8.50, "text": "Closer to heaven", "color": "#FFB6C1"},
+        {"time": 10.50, "text": "Tell you how beautiful you are", "color": "#FFB6C1"},
+        {"time": 15.50, "text": "Lips like a prayer", "color": "#00FFFF"},
+        {"time": 18.50, "text": "Undone in your presence", "color": "#00FFFF"},
+        {"time": 22.00, "text": "Worship your body in the dark", "color": "#FFFFFF"},
+        {"time": 25.50, "text": "You're so soft", "color": "#FFB6C1"},
+        {"time": 27.50, "text": "Nothing about you ever hurts me", "color": "#FFB6C1"},
+        {"time": 31.50, "text": "You're so soft", "color": "#FFB6C1"},
+        {"time": 33.00, "text": "I'm a lover at your mercy", "color": "#FFB6C1"},
+        {"time": 47.15, "text": "You're so soft", "color": "#FFB6C1"},
+        {"time": 49.15, "text": "Nothing about you ever hurts me", "color": "#FFB6C1"},
+        {"time": 52.00, "text": "You're so soft", "color": "#FFB6C1"},
+        {"time": 54.00, "text": "I'm a lover at your mercy :)", "color": "#FFB6C1"},
     ]
 
-    if st.button("🚀 Start Lyrics"):
-        placeholder = st.empty()
-        start_time = time.time()
+    # Mengonversi data ke JSON agar bisa dibaca JavaScript
+    lyrics_json = json.dumps(lyrics_data)
+
+    # Integrasi HTML + JS untuk Audio Player & Sinkronisasi
+    sync_html = f"""
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; background: #0e1117; border-radius: 15px; padding: 20px;">
+        <div id="lyric-container" style="
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 80px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        ">Putar lagu untuk melihat lirik...</div>
         
-        for i, (target_time, text, color) in enumerate(lyrics):
-            # Hitung waktu tunggu
-            current_elapsed = time.time() - start_time
-            wait_time = target_time - current_elapsed
+        <audio id="myAudio" controls style="width: 100%; max-width: 500px;">
+            <source src="app/static/{AUDIO_FILE}" type="audio/mpeg">
+            Browser Anda tidak mendukung elemen audio.
+        </audio>
+    </div>
+
+    <script>
+        const lyrics = {lyrics_json};
+        const audio = document.getElementById('myAudio');
+        const container = document.getElementById('lyric-container');
+
+        audio.ontimeupdate = function() {{
+            const currentTime = audio.currentTime;
+            let currentLine = "";
+            let currentColor = "#FFFFFF";
+
+            for (let i = 0; i < lyrics.length; i++) {{
+                if (currentTime >= lyrics[i].time) {{
+                    currentLine = lyrics[i].text;
+                    currentColor = lyrics[i].color;
+                }}
+            }}
             
-            if wait_time > 0:
-                time.sleep(wait_time)
-            
-            # Simulasi efek mengetik (Typewriter)
-            full_display = ""
-            for char in text:
-                full_display += char
-                placeholder.markdown(
-                    f'<p class="lyric-text" style="color: {color};">{full_display}</p>', 
-                    unsafe_allow_html=True
-                )
-                # Kecepatan ketik (sesuaikan jika ingin lebih cepat/lambat)
-                time.sleep(0.05) 
-            
-            # Memberikan jeda singkat antar baris lirik
-            time.sleep(0.5)
+            if (container.innerText !== currentLine) {{
+                container.innerText = currentLine;
+                container.style.color = currentColor;
+                // Animasi sederhana saat teks berubah
+                container.style.opacity = 0;
+                setTimeout(() => {{ container.style.opacity = 1; }}, 50);
+            }}
+        }};
+    </script>
+    """
+
+    # Menampilkan komponen di Streamlit
+    # Catatan: Kita perlu trik agar Streamlit bisa membaca file lokal
+    # Buat folder bernama 'static' di direktori project jika ingin lebih rapi
+    components.html(sync_html, height=400)
+
+    st.markdown("---")
+    st.caption("Pastikan file 'soft.mp3' berada di folder yang sama dengan skrip ini.")
 
 if __name__ == "__main__":
     main()
