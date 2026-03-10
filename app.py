@@ -14,6 +14,7 @@ def get_audio_base64(file_path):
     return base64.b64encode(data).decode()
 
 def main():
+    st.markdown("<h1 style='text-align: center; color: #FFB6C1;'>For Arasha <3</h1>", unsafe_allow_html=True)
     st.markdown("<h1 style='text-align: center; color: #FFB6C1;'>🎵 LANY - Soft</h1>", unsafe_allow_html=True)
     
     AUDIO_FILE = "soft.mp3"
@@ -111,3 +112,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
