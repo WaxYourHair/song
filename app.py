@@ -31,7 +31,7 @@ def lany_soft_lyrics():
     
     # Audio Player
     try:
-        audio_file = open("Soft - LANY.mp3", "rb")
+        audio_file = open("Soft - Lany.mp3", "rb")
         audio_bytes = audio_file.read()
         st.audio(audio_bytes, format="audio/mp3")
     except FileNotFoundError:
@@ -119,4 +119,5 @@ def lany_soft_lyrics():
         st.success("Selesai! ✨")
 
 if __name__ == "__main__":
+
     lany_soft_lyrics()
