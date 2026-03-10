@@ -1,10 +1,17 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import base64
 import json
 import os
 
 # Konfigurasi Halaman
 st.set_page_config(page_title="LANY - Soft Sync", page_icon="🎵")
+
+def get_audio_base64(file_path):
+    """Mengonversi file audio ke base64 agar bisa diputar di HTML"""
+    with open(file_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
 def main():
     st.markdown("<h1 style='text-align: center; color: #FFB6C1;'>🎵 LANY - Soft</h1>", unsafe_allow_html=True)
@@ -12,10 +19,13 @@ def main():
     AUDIO_FILE = "soft.mp3"
     
     if not os.path.exists(AUDIO_FILE):
-        st.error(f"File '{AUDIO_FILE}' tidak ditemukan di direktori.")
+        st.error(f"File '{AUDIO_FILE}' tidak ditemukan. Pastikan file berada di folder yang sama dengan skrip ini.")
         return
 
-    # Data Lirik (Detik, Teks, Warna)
+    # Konversi audio ke Base64
+    audio_base64 = get_audio_base64(AUDIO_FILE)
+
+    # Data Lirik
     lyrics_data = [
         {"time": 0.0, "text": "But I'm the only one that gets to", "color": "#FFFFFF"},
         {"time": 6.0, "text": "Take you upstairs", "color": "#FFB6C1"},
@@ -34,63 +44,70 @@ def main():
         {"time": 54.00, "text": "I'm a lover at your mercy :)", "color": "#FFB6C1"},
     ]
 
-    # Mengonversi data ke JSON agar bisa dibaca JavaScript
     lyrics_json = json.dumps(lyrics_data)
 
-    # Integrasi HTML + JS untuk Audio Player & Sinkronisasi
+    # HTML + JS + CSS
     sync_html = f"""
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; background: #0e1117; border-radius: 15px; padding: 20px;">
-        <div id="lyric-container" style="
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 28px;
-            font-weight: bold;
-            text-align: center;
-            min-height: 80px;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-        ">Putar lagu untuk melihat lirik...</div>
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; 
+                background: #1e1e2e; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         
-        <audio id="myAudio" controls style="width: 100%; max-width: 500px;">
-            <source src="app/static/{AUDIO_FILE}" type="audio/mpeg">
-            Browser Anda tidak mendukung elemen audio.
+        <div id="lyric-box" style="
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        ">
+            <div id="lyric-text" style="
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 26px;
+                font-weight: bold;
+                text-align: center;
+                line-height: 1.4;
+                transition: all 0.4s ease;
+                color: #FFFFFF;
+                opacity: 0.8;
+            ">Tekan Play untuk Memulai</div>
+        </div>
+        
+        <audio id="audioPlayer" controls style="width: 100%; filter: invert(20%) sepia(95%) saturate(3000%) hue-rotate(300deg);">
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mpeg">
         </audio>
     </div>
 
     <script>
         const lyrics = {lyrics_json};
-        const audio = document.getElementById('myAudio');
-        const container = document.getElementById('lyric-container');
+        const audio = document.getElementById('audioPlayer');
+        const lyricText = document.getElementById('lyric-text');
 
         audio.ontimeupdate = function() {{
             const currentTime = audio.currentTime;
-            let currentLine = "";
-            let currentColor = "#FFFFFF";
+            let activeLine = lyrics[0].text;
+            let activeColor = lyrics[0].color;
 
             for (let i = 0; i < lyrics.length; i++) {{
                 if (currentTime >= lyrics[i].time) {{
-                    currentLine = lyrics[i].text;
-                    currentColor = lyrics[i].color;
+                    activeLine = lyrics[i].text;
+                    activeColor = lyrics[i].color;
                 }}
             }}
             
-            if (container.innerText !== currentLine) {{
-                container.innerText = currentLine;
-                container.style.color = currentColor;
-                // Animasi sederhana saat teks berubah
-                container.style.opacity = 0;
-                setTimeout(() => {{ container.style.opacity = 1; }}, 50);
+            if (lyricText.innerHTML !== activeLine) {{
+                lyricText.style.transform = "translateY(-10px)";
+                lyricText.style.opacity = "0";
+                
+                setTimeout(() => {{
+                    lyricText.innerHTML = activeLine;
+                    lyricText.style.color = activeColor;
+                    lyricText.style.transform = "translateY(0)";
+                    lyricText.style.opacity = "1";
+                }}, 200);
             }}
         }};
     </script>
     """
 
-    # Menampilkan komponen di Streamlit
-    # Catatan: Kita perlu trik agar Streamlit bisa membaca file lokal
-    # Buat folder bernama 'static' di direktori project jika ingin lebih rapi
-    components.html(sync_html, height=400)
-
-    st.markdown("---")
-    st.caption("Pastikan file 'soft.mp3' berada di folder yang sama dengan skrip ini.")
+    components.html(sync_html, height=450)
 
 if __name__ == "__main__":
     main()
